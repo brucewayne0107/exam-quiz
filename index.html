@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="刷题">
+<meta name="theme-color" content="#0b1020">
+<title>CPA 刷题</title>
+<style>
+:root { --bg: #f4f6fa; --card: #ffffff; --fill: #eef1f6; --line: #dde2ea; --t1: #141a26; --t2: #5b6577; --t3: #98a1b0; --accent: #0f9f8f; --accent-ink: #ffffff; --accent-soft: rgba(15, 159, 143, .12); --ok: #1a9a5c; --ok-soft: rgba(26, 154, 92, .12); --bad: #d64562; --bad-soft: rgba(214, 69, 98, .1); --warn: #c98a1e; --warn-soft: rgba(224, 164, 58, .14); --hook: #7b5cc8; --hook-soft: rgba(139, 111, 209, .1); }
+@media (prefers-color-scheme: dark) { :root { --bg: #0b1020; --card: #141b2e; --fill: #1b2338; --line: #263049; --t1: #eef2fa; --t2: #a3adc2; --t3: #6c7690; --accent: #5ee0cf; --accent-ink: #062320; --accent-soft: rgba(94, 224, 207, .14); --ok: #3ddc97; --ok-soft: rgba(61, 220, 151, .14); --bad: #ff6b86; --bad-soft: rgba(255, 107, 134, .13); --warn: #f0b454; --warn-soft: rgba(240, 180, 84, .13); --hook: #ad94f0; --hook-soft: rgba(173, 148, 240, .12); color-scheme: dark; } }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--t1); }
+body { font: 16px/1.65 -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Noto Sans CJK SC", sans-serif; padding: env(safe-area-inset-top, 0px) max(16px, env(safe-area-inset-right, 0px)) calc(96px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+main { max-width: 680px; margin: 0 auto; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+[hidden] { display: none !important; }
+
+/* 顶栏 */
+header { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 10px; }
+header h1 { margin: 0; font-size: 22px; letter-spacing: -.3px; }
+header .sub { font-size: 13px; color: var(--t2); }
+.back { font-size: 15px; color: var(--t2); padding: 6px 0; }
+
+/* 书 */
+#books { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+#books button { flex: none; padding: 8px 14px; border-radius: 99px; background: var(--card); border: 1px solid var(--line); font-size: 14px; font-weight: 600; }
+#books button.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+/* 总进度 */
+.sum { margin-top: 14px; padding: 16px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
+.sum .big { font-size: 30px; font-weight: 700; letter-spacing: -.5px; font-variant-numeric: tabular-nums; }
+.sum .big small { font-size: 14px; font-weight: 400; color: var(--t2); margin-left: 4px; }
+.bar { height: 6px; border-radius: 3px; background: var(--fill); overflow: hidden; margin-top: 8px; }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.sum .row { display: flex; gap: 16px; margin-top: 10px; font-size: 14px; color: var(--t2); font-variant-numeric: tabular-nums; }
+.sum .row b { color: var(--t1); }
+.modes { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+.modes button { padding: 12px 6px; border-radius: 12px; background: var(--fill); font-size: 14px; font-weight: 600; text-align: center; }
+.modes button small { display: block; font-size: 12px; font-weight: 400; color: var(--t2); }
+.modes button.pri { background: var(--accent); color: var(--accent-ink); }
+.modes button.pri small { color: inherit; opacity: .75; }
+
+/* 章节 */
+h2 { font-size: 14px; color: var(--t2); font-weight: 600; margin: 22px 0 8px; }
+.ch { display: flex; align-items: center; width: 100%; text-align: left; padding: 12px 14px; margin-bottom: 8px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); }
+.ch .code { flex: none; width: 44px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.ch .nm { flex: 1; min-width: 0; }
+.ch .nm b { display: block; font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ch .nm .bar { height: 4px; margin-top: 6px; }
+.ch .ct { flex: none; margin-left: 12px; font-size: 13px; color: var(--t2); text-align: right; font-variant-numeric: tabular-nums; }
+.ch .ct .w { color: var(--bad); display: block; }
+
+/* 做题 */
+#q .meta { display: flex; justify-content: space-between; font-size: 13px; color: var(--t2); margin-top: 4px; }
+#q .meta b { color: var(--t1); }
+#q .qbar { height: 4px; margin-top: 8px; }
+#q h3 { margin: 14px 0 2px; font-size: 18px; line-height: 1.4; }
+#q h3 small { display: block; font-size: 12px; font-weight: 400; color: var(--t3); margin-top: 2px; }
+.tag { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 99px; margin-right: 6px; background: var(--fill); color: var(--t2); vertical-align: 2px; }
+.tag.w { background: var(--bad-soft); color: var(--bad); }
+.md p { margin: 0 0 .6em; }
+.md ul { margin: .3em 0 .5em; padding-left: 1.2em; }
+.md li { margin: .15em 0; }
+.md table { display: block; overflow-x: auto; border-collapse: collapse; font-size: 14px; margin: .5em 0; max-width: 100%; }
+.md th, .md td { border: 1px solid var(--line); padding: 5px 8px; vertical-align: top; }
+.md th { background: var(--fill); }
+.stem { margin-top: 10px; }
+.op { display: flex; width: 100%; text-align: left; margin-top: 10px; padding: 13px 14px; border-radius: 14px; background: var(--card); border: 1.5px solid var(--line); line-height: 1.5; font-size: 15.5px; transition: transform .1s; }
+.op:active { transform: scale(.985); }
+.op b { flex: none; width: 26px; font-weight: 700; color: var(--t2); }
+.op.right { border-color: var(--ok); background: var(--ok-soft); } .op.right b { color: var(--ok); }
+.op.wrong { border-color: var(--bad); background: var(--bad-soft); } .op.wrong b { color: var(--bad); }
+.op.dim { opacity: .5; }
+.vd { margin: 18px 0 6px; font-size: 18px; font-weight: 700; }
+.vd.ok { color: var(--ok); } .vd.bad { color: var(--bad); }
+.tp { font-size: 13px; color: var(--t2); margin-bottom: 8px; }
+.xs { margin: 10px 0 0; padding: 8px 12px; border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; background: var(--accent-soft); font-size: 15px; }
+.xs > b { color: var(--accent); }
+.xs ul { margin: 4px 0 0; padding-left: 1.2em; } .xs p { margin: 4px 0 0; }
+.xs-concl { border-left-color: var(--ok); background: var(--ok-soft); } .xs-concl > b { color: var(--ok); }
+.xs-trap { border-left-color: var(--warn); background: var(--warn-soft); } .xs-trap > b { color: var(--warn); }
+.xs-hook { border-left-color: var(--hook); background: var(--hook-soft); } .xs-hook > b { color: var(--hook); }
+.empty { padding: 40px 0; text-align: center; color: var(--t2); }
+
+/* 底栏 */
+#dock { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--bg) 88%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-top: 1px solid var(--line); }
+#dock .in { max-width: 680px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 8px; }
+#dock button { height: 50px; border-radius: 14px; background: var(--fill); font-weight: 600; font-size: 15px; }
+#dock button.on { background: var(--bad-soft); color: var(--bad); }
+#dock #nx { background: var(--accent); color: var(--accent-ink); }
+#toast { position: fixed; left: 50%; top: calc(16px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); padding: 8px 16px; border-radius: 99px; background: var(--t1); color: var(--bg); font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 9; }
+#toast.on { opacity: .92; }
+footer { margin-top: 28px; font-size: 12px; color: var(--t3); line-height: 1.6; }
+footer a { color: var(--t2); }
+</style>
+</head>
+<body>
+<main>
+  <section id="home">
+    <header><div><h1>CPA 刷题</h1><div class="sub">进度只存在这台手机的浏览器里</div></div></header>
+    <div id="books"></div>
+    <div class="sum" id="sum"></div>
+    <h2>按章节</h2>
+    <div id="chs"></div>
+    <footer>题目和解析来自 <a href="https://github.com/brucewayne0107/exam-quiz">exam-quiz</a>，按 <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hans">CC BY-SA 4.0</a> 发布。<br>清掉浏览器数据会丢进度；可以在下面导出 / 导入。<br><button id="exp" style="text-decoration:underline">导出进度</button> · <button id="imp" style="text-decoration:underline">导入进度</button></footer>
+  </section>
+  <section id="q" hidden>
+    <header><button class="back" id="bk">‹ 章节</button><span class="sub" id="qmode"></span></header>
+    <div class="meta"><span id="qpos"></span><span id="qsc"></span></div>
+    <div class="bar qbar"><i id="qfill"></i></div>
+    <div id="qbody"></div>
+  </section>
+</main>
+<div id="dock" hidden><div class="in"><button id="pv">上一题</button><button id="mk">★ 错题</button><button id="nx">下一题</button></div></div>
+<div id="toast"></div>
+<script>
+'use strict';
+var $ = function (id) { return document.getElementById(id); };
+var BOOKS = [], book = '', D = null, ST = null, pool = [], at = 0, mode = '', picks = {}, sesOk = 0, sesBad = 0;
+function load(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function toast(t) { var e = $('toast'); e.textContent = t; e.className = 'on'; clearTimeout(toast.t); toast.t = setTimeout(function () { e.className = ''; }, 1600); }
+function esc(t) { return String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function st() { return ST; }
+function persist() { save('eq_' + book, ST); }
+
+function getJSON(u) { return fetch(u).then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); }); }
+function openBook(b) {
+  book = b; save('eq_book', b);
+  ST = load('eq_' + b, { ans: {}, wrong: {} });
+  drawBooks(); $('sum').innerHTML = '<div class="empty">加载题库…</div>'; $('chs').innerHTML = '';
+  getJSON('data/' + b + '.json').then(function (d) { if (book !== b) { return; } D = d; drawHome(); }, function () { $('sum').innerHTML = '<div class="empty">题库加载失败，检查网络后刷新</div>'; });
+}
+function drawBooks() {
+  $('books').innerHTML = BOOKS.map(function (b) { return '<button data-b="' + b.id + '" class="' + (b.id === book ? 'on' : '') + '">' + esc(b.name) + '</button>'; }).join('');
+}
+function stats(qs) {
+  var done = 0, ok = 0, w = 0;
+  qs.forEach(function (q) { var a = ST.ans[q.id]; if (a) { done++; if (a === q.a) { ok++; } } if (ST.wrong[q.id]) { w++; } });
+  return { done: done, ok: ok, w: w };
+}
+function drawHome() {
+  var s = stats(D.qs), n = D.qs.length, todo = n - s.done;
+  $('sum').innerHTML = '<div class="big">' + s.done + '<small>/ ' + n + ' 已做</small></div><div class="bar"><i style="width:' + (s.done / n * 100).toFixed(1) + '%"></i></div>' +
+    '<div class="row"><span>正确率 <b>' + (s.done ? Math.round(s.ok / s.done * 100) + '%' : '—') + '</b></span><span>错题本 <b>' + s.w + '</b></span></div>' +
+    '<div class="modes"><button class="pri" data-m="todo">没做过的<small>' + todo + ' 题</small></button><button data-m="wrong">错题本<small>' + s.w + ' 题</small></button><button data-m="rand">随机<small>全书</small></button></div>';
+  $('chs').innerHTML = D.chapters.map(function (c) {
+    var qs = D.qs.filter(function (q) { return q.ch === c.code; }), t = stats(qs);
+    return '<button class="ch" data-c="' + c.code + '"><span class="code">' + esc(c.code) + '</span><span class="nm"><b>' + esc(c.name || c.code) + '</b><span class="bar"><i style="width:' + (t.done / c.n * 100).toFixed(1) + '%"></i></span></span><span class="ct">' + t.done + '/' + c.n + (t.w ? '<span class="w">错 ' + t.w + '</span>' : '') + '</span></button>';
+  }).join('');
+}
+function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function start(m, ch) {
+  var all = D.qs.map(function (q, i) { return i; }), first = 0;
+  mode = m; picks = {}; sesOk = 0; sesBad = 0;
+  if (m === 'ch') { pool = all.filter(function (i) { return D.qs[i].ch === ch; }); first = pool.findIndex(function (i) { return !ST.ans[D.qs[i].id]; }); if (first < 0) { first = 0; } }
+  else if (m === 'wrong') { pool = all.filter(function (i) { return ST.wrong[D.qs[i].id]; }); }
+  else if (m === 'todo') { pool = all.filter(function (i) { return !ST.ans[D.qs[i].id]; }); }
+  else { pool = shuffle(all); }
+  if (!pool.length) { toast(m === 'wrong' ? '错题本是空的' : '这里的题都做过了'); return; }
+  at = first;
+  $('qmode').textContent = m === 'ch' ? ch + ' ' + ((D.chapters.find(function (c) { return c.code === ch; }) || {}).name || '') : { wrong: '错题本', todo: '没做过的', rand: '随机' }[m];
+  $('home').hidden = true; $('q').hidden = false; $('dock').hidden = false;
+  drawQ(true);
+}
+function drawQ(top) {
+  var q = D.qs[pool[at]], p = picks[q.id], h = '', prev = ST.ans[q.id];
+  $('qpos').innerHTML = '<b>' + (at + 1) + '</b> / ' + pool.length + ' · ' + esc(q.id);
+  $('qsc').innerHTML = '<span style="color:var(--ok)">对 ' + sesOk + '</span> · <span style="color:var(--bad)">错 ' + sesBad + '</span>';
+  $('qfill').style.width = ((at + 1) / pool.length * 100).toFixed(1) + '%';
+  h += '<h3>' + (ST.wrong[q.id] ? '<span class="tag w">错题本</span>' : '') + (prev && !p ? '<span class="tag">上次' + (prev === q.a ? '对' : '错') + '</span>' : '') + esc(q.t) + '<small>' + esc(q.en) + '</small></h3>';
+  h += '<div class="md stem">' + q.s + '</div>';
+  q.o.forEach(function (o) {
+    var c = 'op';
+    if (p) { c += o[0] === q.a ? ' right' : (o[0] === p ? ' wrong' : ' dim'); }
+    h += '<button class="' + c + '" data-k="' + o[0] + '"><b>' + o[0] + '</b><span>' + o[1] + '</span></button>';
+  });
+  if (p) {
+    h += '<div class="vd ' + (p === q.a ? 'ok">✓ 答对了' : 'bad">✗ 你选 ' + p + '，正确答案 ' + q.a) + '</div>';
+    if (q.tp) { h += '<div class="tp">考点：' + esc(q.tp) + '</div>'; }
+    h += '<div class="md">' + q.x + '</div>';
+  }
+  $('qbody').innerHTML = h;
+  $('mk').className = ST.wrong[q.id] ? 'on' : '';
+  $('pv').disabled = at === 0; $('pv').style.opacity = at === 0 ? .4 : 1;
+  $('nx').textContent = at === pool.length - 1 ? '完成' : '下一题';
+  if (top) { window.scrollTo(0, 0); }
+}
+function pick(k) {
+  var q = D.qs[pool[at]];
+  if (picks[q.id]) { return; }
+  picks[q.id] = k; ST.ans[q.id] = k;
+  if (k === q.a) { sesOk++; } else { sesBad++; ST.wrong[q.id] = 1; }
+  persist();
+  if (navigator.vibrate) { navigator.vibrate(k === q.a ? 15 : [20, 40, 20]); }
+  drawQ(false);
+  var v = document.querySelector('.vd'); if (v) { v.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+function go(d) {
+  var n = at + d;
+  if (n < 0) { return; }
+  if (n >= pool.length) { toast('这一组做完了：对 ' + sesOk + '，错 ' + sesBad); home(); return; }
+  at = n; drawQ(true);
+}
+function home() { $('home').hidden = false; $('q').hidden = true; $('dock').hidden = true; drawHome(); window.scrollTo(0, 0); }
+
+document.addEventListener('click', function (e) {
+  var t = e.target.closest('button'); if (!t) { return; }
+  if (t.dataset.b) { openBook(t.dataset.b); }
+  else if (t.dataset.m) { start(t.dataset.m); }
+  else if (t.dataset.c) { start('ch', t.dataset.c); }
+  else if (t.dataset.k) { pick(t.dataset.k); }
+  else if (t.id === 'bk') { home(); }
+  else if (t.id === 'pv') { go(-1); }
+  else if (t.id === 'nx') { go(1); }
+  else if (t.id === 'mk') { var id = D.qs[pool[at]].id; if (ST.wrong[id]) { delete ST.wrong[id]; toast('移出错题本'); } else { ST.wrong[id] = 1; toast('加入错题本'); } persist(); drawQ(false); }
+  else if (t.id === 'exp') { exportProg(); }
+  else if (t.id === 'imp') { importProg(); }
+});
+// 左右滑切题（横向位移明显大于纵向时才算，表格横向滚动不触发）
+var sx = 0, sy = 0, sok = false;
+document.addEventListener('touchstart', function (e) { if ($('q').hidden) { return; } var t = e.touches[0]; sx = t.clientX; sy = t.clientY; sok = !e.target.closest('table'); }, { passive: true });
+document.addEventListener('touchend', function (e) {
+  if ($('q').hidden || !sok) { return; }
+  var t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+  if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) { go(dx < 0 ? 1 : -1); }
+}, { passive: true });
+
+function exportProg() {
+  var all = {}; BOOKS.forEach(function (b) { all[b.id] = load('eq_' + b.id, null); });
+  var text = JSON.stringify(all);
+  if (navigator.clipboard) { navigator.clipboard.writeText(text).then(function () { toast('进度已复制，粘贴到备忘录保存'); }, function () { window.prompt('复制下面的进度文字', text); }); }
+  else { window.prompt('复制下面的进度文字', text); }
+}
+function importProg() {
+  var text = window.prompt('粘贴之前导出的进度文字（会和现在的进度合并）');
+  if (!text) { return; }
+  try {
+    var all = JSON.parse(text), n = 0;
+    Object.keys(all).forEach(function (b) {
+      var src = all[b]; if (!src || !src.ans) { return; }
+      var cur = load('eq_' + b, { ans: {}, wrong: {} });
+      Object.keys(src.ans).forEach(function (k) { if (!cur.ans[k]) { cur.ans[k] = src.ans[k]; n++; } });
+      Object.keys(src.wrong || {}).forEach(function (k) { cur.wrong[k] = 1; });
+      save('eq_' + b, cur);
+    });
+    toast('导入了 ' + n + ' 题的记录'); openBook(book);
+  } catch (e) { toast('格式不对'); }
+}
+
+getJSON('data/books.json').then(function (b) {
+  BOOKS = b;
+  var last = load('eq_book', ''); openBook(BOOKS.some(function (x) { return x.id === last; }) ? last : BOOKS[0].id);
+}, function () { $('sum').innerHTML = '<div class="empty">题库加载失败，检查网络后刷新</div>'; });
+</script>
+</body>
+</html>
