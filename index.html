@@ -89,6 +89,9 @@ h2 { font-size: 14px; color: var(--t2); font-weight: 600; margin: 22px 0 8px; }
 .ai .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
 .ai .two button { padding: 11px 8px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 15px; text-align: center; line-height: 1.35; }
 .ai .two button small { display: block; font-size: 12px; font-weight: 400; color: var(--t2); }
+.note { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--warn-soft); color: var(--t1); font-size: 13px; line-height: 1.6; }
+.note a, .fb a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.fb { margin-top: 12px; font-size: 13px; color: var(--t2); text-align: right; }
 .empty { padding: 40px 0; text-align: center; color: var(--t2); }
 
 /* 底栏 */
@@ -108,6 +111,7 @@ footer a { color: var(--t2); }
   <section id="home">
     <header><div><h1>CPA 刷题</h1><div class="sub">进度只存在这台手机的浏览器里</div></div></header>
     <div id="books"></div>
+    <div class="note">⚠️ 题目和解析由 AI 生成，<b>未经专业人士逐题审核</b>，可能有错；准则和数字以 AICPA 官方资料为准。发现错误欢迎 <a href="https://github.com/brucewayne0107/exam-quiz/issues" target="_blank" rel="noopener">反馈</a>（每道题下面也有反馈入口）。</div>
     <div class="sum" id="sum"></div>
     <h2>按章节</h2>
     <div id="chs"></div>
@@ -191,6 +195,7 @@ function drawQ(top) {
   }
   h += '<div class="ai"><div class="hd"><span>问 AI（会先复制题目）</span><select id="aisel">' + AIS.map(function (a) { return '<option value="' + a[0] + '"' + (a[0] === aiTo ? ' selected' : '') + '>' + a[1] + '</option>'; }).join('') + '</select></div>' +
     '<div class="two"><button data-ai="frame">大框架<small>这题在知识树的哪里</small></button><button data-ai="deep">系统梳理<small>相关知识点全面讲透</small></button></div></div>';
+  h += '<div class="fb">这题有错？<a target="_blank" rel="noopener" href="https://github.com/brucewayne0107/exam-quiz/issues/new?title=' + encodeURIComponent('[' + q.id + '] ' + q.t + '：') + '&body=' + encodeURIComponent('题号：' + q.id + '\n哪里有问题（答案 / 解析 / 题干 / 条款号）：\n\n依据（官方来源链接更好）：\n') + '">反馈给作者</a></div>';
   $('qbody').innerHTML = h;
   $('mk').className = ST.wrong[q.id] ? 'on' : '';
   $('pv').disabled = at === 0; $('pv').style.opacity = at === 0 ? .4 : 1;
