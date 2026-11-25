@@ -142,7 +142,7 @@ function openBook(b) {
   book = b; save('eq_book', b);
   ST = load('eq_' + b, { ans: {}, wrong: {} });
   drawBooks(); $('sum').innerHTML = '<div class="empty">加载题库…</div>'; $('chs').innerHTML = '';
-  getJSON('data/' + b + '.json').then(function (d) { if (book !== b) { return; } D = d; drawHome(); }, function () { $('sum').innerHTML = '<div class="empty">题库加载失败，检查网络后刷新</div>'; });
+  getJSON('data/' + b + '.json').then(function (d) { if (book !== b) { return; } D = d; drawHome(); restoreSes(); }, function () { $('sum').innerHTML = '<div class="empty">题库加载失败，检查网络后刷新</div>'; });
 }
 function drawBooks() {
   $('books').innerHTML = BOOKS.map(function (b) { return '<button data-b="' + b.id + '" class="' + (b.id === book ? 'on' : '') + '">' + esc(b.name) + '</button>'; }).join('');
@@ -173,9 +173,20 @@ function start(m, ch) {
   if (!pool.length) { toast(m === 'wrong' ? '错题本是空的' : '这里的题都做过了'); return; }
   at = first;
   $('qmode').textContent = m === 'ch' ? ch + ' ' + ((D.chapters.find(function (c) { return c.code === ch; }) || {}).name || '') : { wrong: '错题本', todo: '没做过的', rand: '随机' }[m];
-  $('home').hidden = true; $('q').hidden = false; $('dock').hidden = false;
-  drawQ(true);
+  showQ(); drawQ(true);
 }
+function showQ() { $('home').hidden = true; $('q').hidden = false; $('dock').hidden = false; }
+// 记住做到哪题：切到别的 App、手机把页面回收重载后，回来还在原题原位置
+function saveSes() { if (!$('q').hidden && D) { save('eq_ses', { book: book, mode: mode, label: $('qmode').textContent, pool: pool, at: at, picks: picks, ok: sesOk, bad: sesBad, y: window.scrollY, t: Date.now() }); } }
+function restoreSes() {
+  var x = load('eq_ses', null);
+  if (!x || x.book !== book || Date.now() - x.t > 12 * 3600 * 1000 || !x.pool || !x.pool.length || x.pool.some(function (i) { return !D.qs[i]; })) { return false; }
+  mode = x.mode; pool = x.pool; at = Math.min(x.at, pool.length - 1); picks = x.picks || {}; sesOk = x.ok || 0; sesBad = x.bad || 0;
+  $('qmode').textContent = x.label || ''; showQ(); drawQ(false); window.scrollTo(0, x.y || 0);
+  return true;
+}
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') { saveSes(); } });
+window.addEventListener('pagehide', saveSes);
 function drawQ(top) {
   var q = D.qs[pool[at]], p = picks[q.id], h = '', prev = ST.ans[q.id];
   $('qpos').innerHTML = '<b>' + (at + 1) + '</b> / ' + pool.length + ' · ' + esc(q.id);
@@ -201,6 +212,7 @@ function drawQ(top) {
   $('pv').disabled = at === 0; $('pv').style.opacity = at === 0 ? .4 : 1;
   $('nx').textContent = at === pool.length - 1 ? '完成' : '下一题';
   if (top) { window.scrollTo(0, 0); }
+  saveSes();
 }
 // 问 AI：拼好提示词 → 复制 → 打开选的 AI（带上提示词；App 不认的话直接粘贴）
 var AIS = [['claude', 'Claude'], ['chatgpt', 'ChatGPT'], ['gemini', 'Gemini'], ['copy', '只复制']];
@@ -224,7 +236,9 @@ function copyText(t, done) {
 function askAI(kind) {
   var t = aiPrompt(kind), u = { claude: 'https://claude.ai/new?q=', chatgpt: 'https://chatgpt.com/?q=', gemini: 'https://gemini.google.com/app?q=' }[aiTo];
   copyText(t, function (ok) { toast(ok ? (u ? '已复制题目；没自动填上就粘贴' : '已复制，去 AI 那里粘贴') : '复制失败'); });
-  if (u) { window.open(u + encodeURIComponent(t), '_blank'); }  // 复制和开窗口都在同一次点击里，手机才不拦
+  // 不开新标签：iPhone 会把链接交给 AI App，留下一个空白标签页，切回来就是白屏。
+  // 本页直接跳转：装了 App 就打开 App、本页不动；没装就在本页打开网页版，按返回回来，题目和位置都会恢复。
+  if (u) { saveSes(); location.href = u + encodeURIComponent(t); }
 }
 function pick(k) {
   var q = D.qs[pool[at]];
@@ -242,7 +256,7 @@ function go(d) {
   if (n >= pool.length) { toast('这一组做完了：对 ' + sesOk + '，错 ' + sesBad); home(); return; }
   at = n; drawQ(true);
 }
-function home() { $('home').hidden = false; $('q').hidden = true; $('dock').hidden = true; drawHome(); window.scrollTo(0, 0); }
+function home() { save('eq_ses', null); $('home').hidden = false; $('q').hidden = true; $('dock').hidden = true; drawHome(); window.scrollTo(0, 0); }
 
 document.addEventListener('click', function (e) {
   var t = e.target.closest('button'); if (!t) { return; }
