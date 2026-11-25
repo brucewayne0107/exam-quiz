@@ -82,6 +82,13 @@ h2 { font-size: 14px; color: var(--t2); font-weight: 600; margin: 22px 0 8px; }
 .xs-concl { border-left-color: var(--ok); background: var(--ok-soft); } .xs-concl > b { color: var(--ok); }
 .xs-trap { border-left-color: var(--warn); background: var(--warn-soft); } .xs-trap > b { color: var(--warn); }
 .xs-hook { border-left-color: var(--hook); background: var(--hook-soft); } .xs-hook > b { color: var(--hook); }
+/* 问 AI */
+.ai { margin-top: 20px; padding: 14px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); }
+.ai .hd { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; color: var(--t2); }
+.ai select { font: inherit; font-size: 13px; color: var(--t1); background: var(--fill); border: 1px solid var(--line); border-radius: 8px; padding: 3px 6px; }
+.ai .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.ai .two button { padding: 11px 8px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 15px; text-align: center; line-height: 1.35; }
+.ai .two button small { display: block; font-size: 12px; font-weight: 400; color: var(--t2); }
 .empty { padding: 40px 0; text-align: center; color: var(--t2); }
 
 /* 底栏 */
@@ -182,11 +189,37 @@ function drawQ(top) {
     if (q.tp) { h += '<div class="tp">考点：' + esc(q.tp) + '</div>'; }
     h += '<div class="md">' + q.x + '</div>';
   }
+  h += '<div class="ai"><div class="hd"><span>问 AI（会先复制题目）</span><select id="aisel">' + AIS.map(function (a) { return '<option value="' + a[0] + '"' + (a[0] === aiTo ? ' selected' : '') + '>' + a[1] + '</option>'; }).join('') + '</select></div>' +
+    '<div class="two"><button data-ai="frame">大框架<small>这题在知识树的哪里</small></button><button data-ai="deep">系统梳理<small>相关知识点全面讲透</small></button></div></div>';
   $('qbody').innerHTML = h;
   $('mk').className = ST.wrong[q.id] ? 'on' : '';
   $('pv').disabled = at === 0; $('pv').style.opacity = at === 0 ? .4 : 1;
   $('nx').textContent = at === pool.length - 1 ? '完成' : '下一题';
   if (top) { window.scrollTo(0, 0); }
+}
+// 问 AI：拼好提示词 → 复制 → 打开选的 AI（带上提示词；App 不认的话直接粘贴）
+var AIS = [['claude', 'Claude'], ['chatgpt', 'ChatGPT'], ['gemini', 'Gemini'], ['copy', '只复制']];
+var aiTo = load('eq_ai', 'claude');
+var ASK = {
+  frame: '请用中文，从「大框架」讲这道题：\n1. 它的考点在 CPA {B} 考纲里属于哪一块，用 3 层以内的层级结构（缩进列表）画出这一块的知识树，标出本题所在的节点；\n2. 用 3–5 句话说明这个节点和上下游概念的关系；\n3. 一句话说明这题为什么选正确答案。\n只讲框架，不要展开细节；拿不准的准则条款号请标注「待核实」，不要编造。',
+  deep: '请用中文，围绕这道题的考点做一次系统、全面的知识点梳理：\n1. 核心定义与适用准则（标准名称 / 条款号）；\n2. 相关的全部规则、例外和数字门槛，容易混淆的概念用表格对比；\n3. 逐个选项说明对或错的原因；\n4. 这个考点常见的出题方式和陷阱；\n5. 出 3 道同考点的变式选择题，附答案和一句解析；\n6. 最后给一句便于记忆的口诀。\n拿不准的准则条款号或数字请标注「待核实」，不要编造。'
+};
+function aiPrompt(kind) {
+  var q = D.qs[pool[at]], p = picks[q.id] || '', ch = (D.chapters.find(function (c) { return c.code === q.ch; }) || {}).name || '';
+  var stem = (document.querySelector('.stem') || {}).innerText || '';
+  var t = ASK[kind].replace('{B}', book.replace(/_\d+$/, '')) + '\n\n【' + q.id + '】' + q.ch + ' ' + ch + (q.tp ? '｜考点：' + q.tp : '') + '\n' + q.t + ' ' + q.en + '\n\n' + stem.trim() + '\n\n';
+  q.o.forEach(function (o) { var d = document.createElement('div'); d.innerHTML = o[1]; t += o[0] + '. ' + d.textContent + '\n'; });
+  if (p) { t += '\n我选了 ' + p + '，正确答案是 ' + q.a + '。'; }
+  return t;
+}
+function copyText(t, done) {
+  function old() { var a = document.createElement('textarea'); a.value = t; a.style.position = 'fixed'; a.style.opacity = '0'; document.body.appendChild(a); a.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} document.body.removeChild(a); done(ok); }
+  if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(t).then(function () { done(true); }, old); } else { old(); }
+}
+function askAI(kind) {
+  var t = aiPrompt(kind), u = { claude: 'https://claude.ai/new?q=', chatgpt: 'https://chatgpt.com/?q=', gemini: 'https://gemini.google.com/app?q=' }[aiTo];
+  copyText(t, function (ok) { toast(ok ? (u ? '已复制题目；没自动填上就粘贴' : '已复制，去 AI 那里粘贴') : '复制失败'); });
+  if (u) { window.open(u + encodeURIComponent(t), '_blank'); }  // 复制和开窗口都在同一次点击里，手机才不拦
 }
 function pick(k) {
   var q = D.qs[pool[at]];
@@ -216,9 +249,11 @@ document.addEventListener('click', function (e) {
   else if (t.id === 'pv') { go(-1); }
   else if (t.id === 'nx') { go(1); }
   else if (t.id === 'mk') { var id = D.qs[pool[at]].id; if (ST.wrong[id]) { delete ST.wrong[id]; toast('移出错题本'); } else { ST.wrong[id] = 1; toast('加入错题本'); } persist(); drawQ(false); }
+  else if (t.dataset.ai) { askAI(t.dataset.ai); }
   else if (t.id === 'exp') { exportProg(); }
   else if (t.id === 'imp') { importProg(); }
 });
+document.addEventListener('change', function (e) { if (e.target.id === 'aisel') { aiTo = e.target.value; save('eq_ai', aiTo); } });
 // 左右滑切题（横向位移明显大于纵向时才算，表格横向滚动不触发）
 var sx = 0, sy = 0, sok = false;
 document.addEventListener('touchstart', function (e) { if ($('q').hidden) { return; } var t = e.touches[0]; sx = t.clientX; sy = t.clientY; sok = !e.target.closest('table'); }, { passive: true });
